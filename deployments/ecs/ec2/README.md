@@ -1,6 +1,6 @@
-# AWS Fargate Deployment
-Familiarity with AWS Fargate (Fargate) is assumed. Consult the 
-[User Guide for AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/userguide/what-is-fargate.html)
+# Amazon ECS EC2 Deployment
+Familiarity with Amazon ECS using launch type EC2 is assumed. Consult the 
+[Getting started with the Amazon ECS console using Amazon EC2](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/getting-started-ecs-ec2.html)
 for further reading.
 
 Unless stated otherwise, the
@@ -28,7 +28,7 @@ JSON.
     },
     {
       "name": "SPLUNK_CONFIG",
-      "value": "/etc/otel/collector/fargate_config.yaml"
+      "value": "/etc/otel/collector/ecs_ec2_config.yaml"
     },
     {
       "name": "ECS_METADATA_EXCLUDED_IMAGES",
@@ -41,13 +41,12 @@ JSON.
 }
 ```
 In the above container definition the Collector is configured to use the default
-configuration file `/etc/otel/collector/fargate_config.yaml`. The Collector image Dockerfile
-is available [here](../../cmd/otelcol/Dockerfile) and the contents of the default
-configuration file can be seen [here](../../cmd/otelcol/config/collector/fargate_config.yaml).
-Note that receiver `smartagent/ecs-metadata` is specified by default. Receiver
-`smartagent/ecs-metadata` uses **task metadata endpoint version 2** by default.
-This endpoint is enabled by default for tasks launched with network mode **awsvpc** 
-according to [docs](https://docs.aws.amazon.com/AmazonECS/latest/userguide/task-metadata-endpoint-fargate.html).
+configuration file `/etc/otel/collector/ecs_ec2_config.yaml`. The Collector image Dockerfile
+is available [here](../../../cmd/otelcol/Dockerfile) and the contents of the default
+configuration file can be seen [here](../../../cmd/otelcol/config/collector/ecs_ec2_config.yaml).
+Receiver `smartagent/ecs-metadata` uses **task metadata endpoint version 2** by default.
+This endpoint is enabled by default for tasks launched with network mode **awsvpc**
+according to [docs](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint.html).
 For other network modes add the following environment variables to the Collector container
 definition if **task metadata endpoint version 3** enabled:
 ```json
@@ -72,7 +71,6 @@ Add the following if **task metadata endpoint version 4** enabled instead:
 }
 ```
 
-
 In summary, the default Collector container definition does the following:
 - Specifies the Collector image.
 - Sets the access token using environment variable `SPLUNK_ACCESS_TOKEN`.
@@ -90,8 +88,12 @@ more information about the memory limiter processor, see
 The example below shows an excerpt of the container definition JSON for the Collector 
 configured to use custom configuration file `/path/to/custom/config/file`. 
 `/path/to/custom/config/file` is a placeholder value for the actual custom configuration
-file path and `0.32.0` is the latest image tag at present. The custom configuration file
-should be present in a volume attached to the task.
+file path and `0.32.0` is the latest image tag at present. 
+
+
+The custom configuration file should be present in a volume attached to the task.
+
+
 ```json
 {
   "environment": [
@@ -187,10 +189,8 @@ task ARN pattern must be updated to keep pace with task revisions.
 ```
 
 ### Direct Configuration
-In Fargate the filesystem is not readily available. This makes specifying the configuration
-YAML directly instead of using a file more convenient. The Collector provides environment
-variable `SPLUNK_CONFIG_YAML` for specifying the configuration YAML directly which can be
-used instead of `SPLUNK_CONFIG`.
+The Collector provides environment variable `SPLUNK_CONFIG_YAML` for specifying the
+configuration YAML directly which can be used instead of `SPLUNK_CONFIG`.
 
 For example, you can store the custom configuration above in a parameter called
 `splunk-otel-collector-config` in **AWS Systems Manager Parameter Store**. Then in your
